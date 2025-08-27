@@ -100,13 +100,14 @@ footer{opacity:.8}
   border-top:2px solid #2a334d;
   border-bottom:2px solid #2a334d;
 }
-.scene .fish-layer{position:absolute;left:0;right:0;top:0;bottom:0;pointer-events:none}
-.fish{position:absolute;width:calc(var(--px) * 4);height:calc(var(--px) * 2)}
+.scene .fish-layer{position:absolute;left:0;right:0;top:calc(var(--px) * 26);height:calc(var(--px) * 16);pointer-events:none; overflow:hidden; z-index:4}
+.fish{position:absolute;width:calc(var(--px) * 4);height:calc(var(--px) * 2);will-change:left,transform;transform:scaleX(1)}
 .fish .body{position:absolute;left:0;top:0;width:100%;height:100%;background:#72efdd;border:2px solid #277f73}
 .fish .tail{position:absolute;right:calc(var(--px) * -1);top:calc(var(--px) * .5);width:calc(var(--px) * 1.5);height:calc(var(--px) * 1);background:#72efdd;border:2px solid #277f73}
 .fish .eye{position:absolute;left:calc(var(--px) * .5);top:calc(var(--px) * .5);width:calc(var(--px) * .5);height:calc(var(--px) * .5);background:#fff;border:2px solid #000}
-.fish.swim{animation:swim-x linear infinite}
-@keyframes swim-x{from{transform:translateX(0)} to{transform:translateX(20vw)}}
+.fish.swim{animation:swim-lr var(--swim-duration) linear infinite alternate, flip-dir var(--swim-duration) linear infinite alternate}
+@keyframes swim-lr{to{left:var(--swim-to)}}
+@keyframes flip-dir{from{transform:scaleX(1)} to{transform:scaleX(-1)}}
 .scene .waves{
   position:absolute;left:0;right:0;top:-2px;height:calc(var(--px) * 2);
   background:

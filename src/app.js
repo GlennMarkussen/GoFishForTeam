@@ -82,11 +82,13 @@
 
   function nextTurn() {
     el.catchResult.classList.add('hidden');
-    el.castStatus.classList.add('hidden');
+  el.castStatus.classList.add('hidden');
   el.goFishBtn.disabled = false;
   el.goFishBtn.classList.remove('hidden');
   if (el.line) el.line.classList.add('hidden');
   if (el.rod) el.rod.classList.add('hidden');
+  // While waiting to click GO FISH, show idle message
+  el.castMessage.textContent = 'Casting the line…';
 
   if (currentIndex >= fishermenOrder.length || fish.length === 0) {
       endGame();
@@ -135,8 +137,9 @@
 
     setTimeout(() => {
       isCasting = false;
-      el.countdown.textContent = '';
-      el.castMessage.textContent = 'A fish is on the hook!';
+  el.countdown.textContent = '';
+  // Keep the idle text rather than showing a bite message
+  el.castMessage.textContent = 'Casting the line…';
 
       const fishName = pickRandomFish();
       const fisherName = fishermenOrder[currentIndex];
@@ -198,19 +201,19 @@
       const eye = document.createElement('div'); eye.className = 'eye';
       f.append(body, tail, eye);
       // Random position within water bounds, using pixel clearance from seabed
-      const leftPct = Math.random() * 80; // initial X
+  // Horizontal constraints: keep fish fully inside layer
+  const fishWidthPx = pxUnit * 4;
+  const minLeftPx = 0;
+  const maxLeftPx = Math.max(0, rect.width - fishWidthPx);
+  const startLeftPx = minLeftPx + Math.random() * (maxLeftPx - minLeftPx);
+  const endLeftPx = minLeftPx + Math.random() * (maxLeftPx - minLeftPx);
       const topPx = minTopPx + Math.random() * (maxTopPx - minTopPx);
-      f.style.top = `${topPx}px`;
-      f.style.left = `${leftPct}%`;
-      // Random swim duration and direction
-      const duration = 6 + Math.random() * 8;
-      f.style.animationDuration = `${duration}s`;
-      if (Math.random() < 0.5) {
-        // reverse direction
-        f.style.transform = 'scaleX(-1)';
-        f.style.animationName = 'swim-x';
-        f.style.animationDirection = 'reverse';
-      }
+  f.style.top = `${topPx}px`;
+  f.style.left = `${startLeftPx}px`;
+  // Random swim duration and bounds
+  const duration = 6 + Math.random() * 8;
+  f.style.setProperty('--swim-duration', `${duration}s`);
+  f.style.setProperty('--swim-to', `${endLeftPx}px`);
       el.fishLayer.appendChild(f);
     }
   }
