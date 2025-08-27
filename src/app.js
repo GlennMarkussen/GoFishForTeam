@@ -27,6 +27,8 @@
     pairsList: qs('#pairsList'),
     playAgainBtn: qs('#playAgainBtn'),
   fishLayer: qs('.fish-layer'),
+  rod: qs('.rod'),
+  get line(){ return this.rod ? this.rod.querySelector('.line') : null; },
   };
 
   /** State */
@@ -56,6 +58,8 @@
     el.castMessage.textContent = 'Casting the line…';
   el.goFishBtn.disabled = false;
   el.goFishBtn.classList.remove('hidden');
+  if (el.rod) el.rod.classList.add('hidden');
+  if (el.line) el.line.classList.add('hidden');
   }
 
   function startGame() {
@@ -81,6 +85,8 @@
     el.castStatus.classList.add('hidden');
   el.goFishBtn.disabled = false;
   el.goFishBtn.classList.remove('hidden');
+  if (el.line) el.line.classList.add('hidden');
+  if (el.rod) el.rod.classList.add('hidden');
 
   if (currentIndex >= fishermenOrder.length || fish.length === 0) {
       endGame();
@@ -114,6 +120,8 @@
     el.catchResult.classList.add('hidden');
   el.goFishBtn.disabled = true;
   el.goFishBtn.classList.add('hidden');
+  if (el.rod) el.rod.classList.remove('hidden');
+  if (el.line) el.line.classList.remove('hidden');
 
     const maxMs = 10_000;
     const minMs = 1_500;
@@ -150,6 +158,8 @@
   function endGame() {
     el.play.classList.add('hidden');
     el.results.classList.remove('hidden');
+  if (el.line) el.line.classList.add('hidden');
+  if (el.rod) el.rod.classList.add('hidden');
     renderPairs();
   }
 
