@@ -26,6 +26,7 @@
     results: qs('#results'),
     pairsList: qs('#pairsList'),
     playAgainBtn: qs('#playAgainBtn'),
+  fishLayer: qs('.fish-layer'),
   };
 
   /** State */
@@ -86,6 +87,7 @@
       return;
     }
   el.currentFisherman.textContent = fishermenOrder[currentIndex];
+  renderFishSprites();
   }
 
   function randomInt(min, max) {
@@ -132,6 +134,9 @@
       const fisherName = fishermenOrder[currentIndex];
       pairs.push([fisherName, fishName]);
 
+  // Remove one visible fish sprite to reflect the catch
+  removeOneFishSprite();
+
       el.catchResult.textContent = `${fisherName} caught ${fishName}!`;
       el.catchResult.classList.remove('hidden');
 
@@ -161,6 +166,58 @@
     // Keep previous inputs for convenience
     resetUI();
   }
+
+  // Visual fish rendering
+  function renderFishSprites() {
+    if (!el.fishLayer) return;
+    el.fishLayer.innerHTML = '';
+    const rect = el.fishLayer.getBoundingClientRect();
+    const pxVar = getComputedStyle(document.documentElement).getPropertyValue('--px').trim();
+    const pxUnit = parseFloat(pxVar || '6');
+    const fishHeightPx = pxUnit * 2; // matches .fish height
+    const bottomClearancePx = pxUnit * 2; // "a few pixels" above seabed
+    const surfaceClearancePx = pxUnit * 2; // keep off the surface
+    const minTopPx = surfaceClearancePx;
+    const maxTopPx = Math.max(minTopPx, rect.height - fishHeightPx - bottomClearancePx);
+    const count = Math.max(0, fish.length);
+    for (let i = 0; i < count; i++) {
+      const f = document.createElement('div');
+      f.className = 'fish swim';
+      const body = document.createElement('div'); body.className = 'body';
+      const tail = document.createElement('div'); tail.className = 'tail';
+      const eye = document.createElement('div'); eye.className = 'eye';
+      f.append(body, tail, eye);
+      // Random position within water bounds, using pixel clearance from seabed
+      const leftPct = Math.random() * 80; // initial X
+      const topPx = minTopPx + Math.random() * (maxTopPx - minTopPx);
+      f.style.top = `${topPx}px`;
+      f.style.left = `${leftPct}%`;
+      // Random swim duration and direction
+      const duration = 6 + Math.random() * 8;
+      f.style.animationDuration = `${duration}s`;
+      if (Math.random() < 0.5) {
+        // reverse direction
+        f.style.transform = 'scaleX(-1)';
+        f.style.animationName = 'swim-x';
+        f.style.animationDirection = 'reverse';
+      }
+      el.fishLayer.appendChild(f);
+    }
+  }
+
+  function removeOneFishSprite() {
+    if (!el.fishLayer) return;
+    const sprite = el.fishLayer.querySelector('.fish');
+    if (sprite) sprite.remove();
+  }
+
+  // Recalculate fish positions on resize to keep seabed clearance
+  window.addEventListener('resize', debounce(() => {
+    // Only re-render when the play section is visible
+    if (!el.play.classList.contains('hidden')) {
+      renderFishSprites();
+    }
+  }, 200));
 
   // Wire events
   el.startBtn.addEventListener('click', startGame);
