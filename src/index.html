@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Go Fish for a Team Mate</title>
+    <link rel="stylesheet" href="./styles.css" />
+    <script defer src="./app.js"></script>
+  </head>
+  <body>
+    <header class="container">
+      <h1>Go Fish for a Team Mate</h1>
+      <p class="lead">Set up two teams, then cast your line and pair a fisherman with a fish.</p>
+    </header>
+
+    <main class="container">
+      <!-- Setup -->
+      <section id="setup" class="card">
+        <h2>Setup teams</h2>
+        <div class="grid">
+          <div>
+            <label for="fishermenInput" class="label">Fishermen (one name per line)</label>
+            <textarea id="fishermenInput" class="input" rows="8" placeholder="Alex\nSam\nTaylor\nJordan"></textarea>
+          </div>
+          <div>
+            <label for="fishInput" class="label">Fish (one name per line)</label>
+            <textarea id="fishInput" class="input" rows="8" placeholder="Pat\nRiley\nMorgan\nCasey"></textarea>
+          </div>
+        </div>
+        <div class="actions">
+          <button id="startBtn" class="btn primary">Start game</button>
+        </div>
+      </section>
+
+      <!-- Play -->
+      <section id="play" class="card hidden" aria-live="polite">
+        <h2>Fishing round</h2>
+        <div class="status-row">
+          <div>
+            <div class="muted">Current fisherman</div>
+            <div id="currentFisherman" class="who"></div>
+          </div>
+          <div class="grow"></div>
+          <button id="goFishBtn" class="btn go-fish">GO FISH</button>
+        </div>
+        <div id="castStatus" class="cast-status hidden">
+          <div class="spinner" aria-hidden="true"></div>
+          <div>
+            <div id="castMessage">Casting the line…</div>
+            <div id="countdown" class="muted small hidden"></div>
+          </div>
+        </div>
+        <div id="catchResult" class="catch-result hidden"></div>
+      </section>
+
+      <!-- Results -->
+      <section id="results" class="card hidden">
+        <h2>Teams paired</h2>
+        <ol id="pairsList" class="pairs"></ol>
+        <div class="actions">
+          <button id="playAgainBtn" class="btn">Play again</button>
+        </div>
+      </section>
+    </main>
+
+    <footer class="container muted small">
+      Built with plain HTML, CSS, and JavaScript.
+    </footer>
+  </body>
+  </html>
