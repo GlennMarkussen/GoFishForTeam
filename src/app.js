@@ -1,16 +1,14 @@
-// Go Fish for a Team Mate — vanilla JS skeleton
-// Contract
+// Go Fish for a Team Mate — vanilla JS
 // - Input: two name lists (one per line)
-// - Flow: start -> for each fisherman -> press GO FISH -> random fish after <=10s -> pair -> next
+// - Flow: start -> for each fisherman -> GO FISH -> random fish after <=10s -> pair -> next
 // - End: show all pairs, allow play again
 
 (() => {
   const qs = (sel) => document.querySelector(sel);
-  // How long to display the caught fish result before proceeding (ms)
-  const CATCH_DISPLAY_MS = 3000;
-  // LocalStorage keys
+  const CATCH_DISPLAY_MS = 3000; // show catch result for 3s
   const LS_KEY_FISHERMEN = 'gofish.fishermen';
   const LS_KEY_FISH = 'gofish.fish';
+
   const el = {
     setup: qs('#setup'),
     fishermenInput: qs('#fishermenInput'),
@@ -25,29 +23,48 @@
     catchResult: qs('#catchResult'),
     results: qs('#results'),
     pairsList: qs('#pairsList'),
-  playAgainBtn: qs('#playAgainBtn'),
-  fishLayer: qs('.fish-layer'),
-  rod: qs('.rod'),
-  get line(){ return this.rod ? this.rod.querySelector('.line') : null; },
-  cloudLayer: qs('.cloud-layer'),
+    playAgainBtn: qs('#playAgainBtn'),
+    fishLayer: qs('.fish-layer'),
+    rod: qs('.rod'),
+    get line() { return this.rod ? this.rod.querySelector('.line') : null; },
+    cloudLayer: qs('.cloud-layer'),
   };
 
-  /** State */
+  // State
   let fishermen = [];
-  let fishermenOrder = [];
   let fish = [];
+  let fishermenOrder = [];
   let pairs = [];
   let currentIndex = 0;
   let isCasting = false;
   let initialized = false;
 
+  // Helpers
   function parseNames(text) {
-    return text
-      .split(/\r?\n/) // lines
-      .map((s) => s.trim())
+    return (text || '')
+      .split(/\r?\n/)
+      .map(s => s.trim())
       .filter(Boolean);
   }
+  function shuffle(arr) {
+    const a = [...arr];
+    for (let i = a.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [a[i], a[j]] = [a[j], a[i]];
+    }
+    return a;
+  }
+  function randomInt(min, max) {
+    return Math.floor(Math.random() * (max - min + 1)) + min;
+  }
+  function pickRandomFish() {
+    if (fish.length === 0) return null;
+    const idx = Math.floor(Math.random() * fish.length);
+    const [name] = fish.splice(idx, 1);
+    return name;
+  }
 
+  // UI control
   function resetUI() {
     el.setup.classList.remove('hidden');
     el.play.classList.add('hidden');
@@ -55,106 +72,81 @@
     el.catchResult.classList.add('hidden');
     el.castStatus.classList.add('hidden');
     el.countdown.textContent = '';
-  el.countdown.classList.add('hidden');
+    el.countdown.classList.add('hidden');
     el.castMessage.textContent = 'Casting the line…';
-  el.goFishBtn.disabled = false;
-  el.goFishBtn.classList.remove('hidden');
-  if (el.rod) el.rod.classList.add('hidden');
-  if (el.line) el.line.classList.add('hidden');
+    el.goFishBtn.disabled = false;
+    el.goFishBtn.classList.remove('hidden');
+    if (el.rod) el.rod.classList.add('hidden');
+    if (el.line) el.line.classList.add('hidden');
+    stopMusic();
   }
 
   function startGame() {
-  saveTeams();
+    saveTeams();
     fishermen = parseNames(el.fishermenInput.value);
     fish = parseNames(el.fishInput.value);
     if (fishermen.length === 0 || fish.length === 0) {
       alert('Please enter at least one name for each team.');
       return;
     }
-  fishermenOrder = shuffle([...fishermen]);
-  pairs = [];
-  currentIndex = 0;
+    fishermenOrder = shuffle([...fishermen]);
+    pairs = [];
+    currentIndex = 0;
 
     el.setup.classList.add('hidden');
     el.play.classList.remove('hidden');
     el.results.classList.add('hidden');
+    startMusic();
     nextTurn();
   }
 
   function nextTurn() {
     el.catchResult.classList.add('hidden');
-  el.castStatus.classList.add('hidden');
-  el.goFishBtn.disabled = false;
-  el.goFishBtn.classList.remove('hidden');
-  if (el.line) el.line.classList.add('hidden');
-  if (el.rod) el.rod.classList.add('hidden');
-  // While waiting to click GO FISH, show idle message
-  el.castMessage.textContent = 'Casting the line…';
+    el.castStatus.classList.add('hidden');
+    el.goFishBtn.disabled = false;
+    el.goFishBtn.classList.remove('hidden');
+    if (el.line) el.line.classList.add('hidden');
+    if (el.rod) el.rod.classList.add('hidden');
+    el.castMessage.textContent = 'Casting the line…';
 
-  if (currentIndex >= fishermenOrder.length || fish.length === 0) {
+    if (currentIndex >= fishermenOrder.length || fish.length === 0) {
       endGame();
       return;
     }
-  el.currentFisherman.textContent = fishermenOrder[currentIndex];
-  renderFishSprites();
-  }
-
-  function randomInt(min, max) {
-    return Math.floor(Math.random() * (max - min + 1)) + min;
-  }
-
-  function pickRandomFish() {
-    const i = randomInt(0, fish.length - 1);
-    return fish.splice(i, 1)[0]; // remove and return
-  }
-
-  function shuffle(arr) {
-    for (let i = arr.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [arr[i], arr[j]] = [arr[j], arr[i]];
-    }
-    return arr;
+    el.currentFisherman.textContent = fishermenOrder[currentIndex];
+    renderFishSprites();
   }
 
   function goFish() {
-    if (isCasting) return; // avoid double clicks
+    if (isCasting) return;
+    el.goFishBtn.disabled = true;
+    el.goFishBtn.classList.add('hidden');
+    if (el.rod) el.rod.classList.remove('hidden');
+    if (el.line) el.line.classList.remove('hidden');
+    playSplash();
 
-    el.castStatus.classList.remove('hidden');
-    el.catchResult.classList.add('hidden');
-  el.goFishBtn.disabled = true;
-  el.goFishBtn.classList.add('hidden');
-  if (el.rod) el.rod.classList.remove('hidden');
-  if (el.line) el.line.classList.remove('hidden');
-
-    const maxMs = 10_000;
-    const minMs = 1_500;
-    const duration = randomInt(minMs, maxMs);
-
-  // Hide countdown to keep timing a surprise
-  el.countdown.textContent = '';
-  el.countdown.classList.add('hidden');
-  el.castMessage.textContent = 'Waiting for a nibble...';
+    el.countdown.textContent = '';
+    el.countdown.classList.add('hidden');
+    el.castMessage.textContent = 'Waiting for a nibble...';
     isCasting = true;
 
+    const duration = randomInt(1500, 10000);
     setTimeout(() => {
       isCasting = false;
-  el.countdown.textContent = '';
-  // Keep the idle text rather than showing a bite message
-  el.castMessage.textContent = 'Casting the line…';
+      el.countdown.textContent = '';
+      el.castMessage.textContent = 'Casting the line…';
 
       const fishName = pickRandomFish();
+      if (!fishName) { endGame(); return; }
       const fisherName = fishermenOrder[currentIndex];
       pairs.push([fisherName, fishName]);
 
-  // Remove one visible fish sprite to reflect the catch
-  removeOneFishSprite();
+      removeOneFishSprite();
 
       el.catchResult.textContent = `${fisherName} caught ${fishName}!`;
       el.catchResult.classList.remove('hidden');
 
       currentIndex += 1;
-
-      // Next turn after showing the catch result
       setTimeout(nextTurn, CATCH_DISPLAY_MS);
     }, duration);
   }
@@ -162,9 +154,10 @@
   function endGame() {
     el.play.classList.add('hidden');
     el.results.classList.remove('hidden');
-  if (el.line) el.line.classList.add('hidden');
-  if (el.rod) el.rod.classList.add('hidden');
+    if (el.line) el.line.classList.add('hidden');
+    if (el.rod) el.rod.classList.add('hidden');
     renderPairs();
+    stopMusic();
   }
 
   function renderPairs() {
@@ -177,7 +170,6 @@
   }
 
   function playAgain() {
-    // Keep previous inputs for convenience
     resetUI();
   }
 
@@ -189,7 +181,7 @@
     const pxVar = getComputedStyle(document.documentElement).getPropertyValue('--px').trim();
     const pxUnit = parseFloat(pxVar || '6');
     const fishHeightPx = pxUnit * 2; // matches .fish height
-    const bottomClearancePx = pxUnit * 2; // "a few pixels" above seabed
+    const bottomClearancePx = pxUnit * 2; // few pixels above seabed
     const surfaceClearancePx = pxUnit * 2; // keep off the surface
     const minTopPx = surfaceClearancePx;
     const maxTopPx = Math.max(minTopPx, rect.height - fishHeightPx - bottomClearancePx);
@@ -201,20 +193,18 @@
       const tail = document.createElement('div'); tail.className = 'tail';
       const eye = document.createElement('div'); eye.className = 'eye';
       f.append(body, tail, eye);
-      // Random position within water bounds, using pixel clearance from seabed
-  // Horizontal constraints: keep fish fully inside layer
-  const fishWidthPx = pxUnit * 4;
-  const minLeftPx = 0;
-  const maxLeftPx = Math.max(0, rect.width - fishWidthPx);
-  const startLeftPx = minLeftPx + Math.random() * (maxLeftPx - minLeftPx);
-  const endLeftPx = minLeftPx + Math.random() * (maxLeftPx - minLeftPx);
+
+      const fishWidthPx = pxUnit * 4;
+      const minLeftPx = 0;
+      const maxLeftPx = Math.max(0, rect.width - fishWidthPx);
+      const startLeftPx = minLeftPx + Math.random() * (maxLeftPx - minLeftPx);
+      const endLeftPx = minLeftPx + Math.random() * (maxLeftPx - minLeftPx);
       const topPx = minTopPx + Math.random() * (maxTopPx - minTopPx);
-  f.style.top = `${topPx}px`;
-  f.style.left = `${startLeftPx}px`;
-  // Random swim duration and bounds
-  const duration = 6 + Math.random() * 8;
-  f.style.setProperty('--swim-duration', `${duration}s`);
-  f.style.setProperty('--swim-to', `${endLeftPx}px`);
+      f.style.top = `${topPx}px`;
+      f.style.left = `${startLeftPx}px`;
+      const duration = 6 + Math.random() * 8;
+      f.style.setProperty('--swim-duration', `${duration}s`);
+      f.style.setProperty('--swim-to', `${endLeftPx}px`);
       el.fishLayer.appendChild(f);
     }
   }
@@ -225,43 +215,100 @@
     if (sprite) sprite.remove();
   }
 
-  // Recalculate fish positions on resize to keep seabed clearance
   window.addEventListener('resize', debounce(() => {
-    // Only re-render when the play section is visible
     if (!el.play.classList.contains('hidden')) {
       renderFishSprites();
     }
   }, 200));
+
+  // --- Audio: Web Audio context + splash ---
+  let audioCtx = null;
+  function getAudioCtx() {
+    try { if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)(); } catch {}
+    return audioCtx;
+  }
+  async function playSplash() {
+    const ctx = getAudioCtx();
+    if (!ctx) return;
+    if (ctx.state === 'suspended') { try { await ctx.resume(); } catch {} }
+
+    const now = ctx.currentTime;
+    const master = ctx.createGain();
+    master.gain.setValueAtTime(0.16, now);
+    master.connect(ctx.destination);
+
+    const noiseDur = 0.22;
+    const bufferSize = Math.floor(ctx.sampleRate * noiseDur);
+    const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+    const data = buffer.getChannelData(0);
+    for (let i = 0; i < bufferSize; i++) data[i] = (Math.random() * 2 - 1) * (1 - i / bufferSize);
+    const noise = ctx.createBufferSource();
+    noise.buffer = buffer;
+    const bp = ctx.createBiquadFilter();
+    bp.type = 'bandpass';
+    bp.frequency.setValueAtTime(1200, now);
+    bp.Q.setValueAtTime(0.8, now);
+    const nGain = ctx.createGain();
+    nGain.gain.setValueAtTime(1.0, now);
+    nGain.gain.exponentialRampToValueAtTime(0.001, now + noiseDur);
+    noise.connect(bp).connect(nGain).connect(master);
+    noise.start(now);
+    noise.stop(now + noiseDur);
+
+    const osc = ctx.createOscillator();
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(520, now);
+    osc.frequency.exponentialRampToValueAtTime(160, now + 0.18);
+    const oGain = ctx.createGain();
+    oGain.gain.setValueAtTime(0.25, now);
+    oGain.gain.exponentialRampToValueAtTime(0.001, now + 0.22);
+    osc.connect(oGain).connect(master);
+    osc.start(now);
+    osc.stop(now + 0.25);
+  }
+
+  // --- Background music: file-based BGM with seagulls ---
+  const musicState = { playing: false, bgm: null };
+  const BGM_FILE = "Reel 'Em In.mp3"; // file is in src/
+
+  async function startMusic() {
+    if (musicState.playing) return;
+    if (!musicState.bgm) {
+      const audio = new Audio();
+      audio.src = encodeURI(BGM_FILE);
+      audio.loop = true;
+      audio.volume = 0.25;
+      musicState.bgm = audio;
+    }
+  try { await musicState.bgm.play(); } catch {}
+  musicState.playing = true;
+  }
+
+  function stopMusic() {
+    if (!musicState.playing) return;
+    try { musicState.bgm && musicState.bgm.pause(); } catch {}
+    musicState.playing = false;
+  }
 
   // Wire events
   el.startBtn.addEventListener('click', startGame);
   el.goFishBtn.addEventListener('click', goFish);
   el.playAgainBtn.addEventListener('click', playAgain);
 
-  // Persistence helpers
-  function lsGet(key, fallback = '') {
-    try { return localStorage.getItem(key) ?? fallback; } catch { return fallback; }
-  }
-  function lsSet(key, value) {
-    try { localStorage.setItem(key, value); } catch { /* ignore quota/blocked */ }
-  }
-
+  // Persistence
+  function lsGet(key, fallback = '') { try { return localStorage.getItem(key) ?? fallback; } catch { return fallback; } }
+  function lsSet(key, value) { try { localStorage.setItem(key, value); } catch {} }
   function saveTeams() {
     lsSet(LS_KEY_FISHERMEN, el.fishermenInput.value || '');
     lsSet(LS_KEY_FISH, el.fishInput.value || '');
   }
-
   function loadTeams() {
     const savedFishermen = lsGet(LS_KEY_FISHERMEN, '');
     const savedFish = lsGet(LS_KEY_FISH, '');
     if (savedFishermen) el.fishermenInput.value = savedFishermen;
     if (savedFish) el.fishInput.value = savedFish;
   }
-
-  // Debounced auto-save on input
-  function debounce(fn, wait = 300) {
-    let t; return (...args) => { clearTimeout(t); t = setTimeout(() => fn(...args), wait); };
-  }
+  function debounce(fn, wait = 300) { let t; return (...args) => { clearTimeout(t); t = setTimeout(() => fn(...args), wait); }; }
   const autoSave = debounce(saveTeams, 300);
   el.fishermenInput.addEventListener('input', autoSave);
   el.fishInput.addEventListener('input', autoSave);
@@ -277,16 +324,13 @@
     for (let i = 0; i < n; i++) {
       const c = document.createElement('div');
       c.className = 'cloud ' + (i % 3 === 0 ? 'slow' : i % 3 === 1 ? 'med' : 'fast');
-      // vary vertical position inside the sky area
-      const topPx = 4 + Math.floor(Math.random() * 10) * 6; // multiples of --px
+      const topPx = 4 + Math.floor(Math.random() * 10) * 6;
       c.style.top = `${topPx}px`;
-      // random start offset into the animation so they are spread out
       c.style.animationDelay = `${-Math.random() * 60}s`;
-      // cloud puffs
       const a = document.createElement('div'); a.className = 'p a';
       const b = document.createElement('div'); b.className = 'p b';
       const d = document.createElement('div'); d.className = 'p c';
-      c.append(a,b,d);
+      c.append(a, b, d);
       el.cloudLayer.appendChild(c);
     }
   }
