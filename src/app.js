@@ -25,10 +25,11 @@
     catchResult: qs('#catchResult'),
     results: qs('#results'),
     pairsList: qs('#pairsList'),
-    playAgainBtn: qs('#playAgainBtn'),
+  playAgainBtn: qs('#playAgainBtn'),
   fishLayer: qs('.fish-layer'),
   rod: qs('.rod'),
   get line(){ return this.rod ? this.rod.querySelector('.line') : null; },
+  cloudLayer: qs('.cloud-layer'),
   };
 
   /** State */
@@ -268,4 +269,26 @@
   // Initial view
   resetUI();
   if (!initialized) { loadTeams(); initialized = true; }
+
+  // Clouds
+  function spawnClouds(n = 3) {
+    if (!el.cloudLayer) return;
+    el.cloudLayer.innerHTML = '';
+    for (let i = 0; i < n; i++) {
+      const c = document.createElement('div');
+      c.className = 'cloud ' + (i % 3 === 0 ? 'slow' : i % 3 === 1 ? 'med' : 'fast');
+      // vary vertical position inside the sky area
+      const topPx = 4 + Math.floor(Math.random() * 10) * 6; // multiples of --px
+      c.style.top = `${topPx}px`;
+      // random start offset into the animation so they are spread out
+      c.style.animationDelay = `${-Math.random() * 60}s`;
+      // cloud puffs
+      const a = document.createElement('div'); a.className = 'p a';
+      const b = document.createElement('div'); b.className = 'p b';
+      const d = document.createElement('div'); d.className = 'p c';
+      c.append(a,b,d);
+      el.cloudLayer.appendChild(c);
+    }
+  }
+  spawnClouds(4);
 })();

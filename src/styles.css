@@ -81,6 +81,16 @@ footer{opacity:.8}
   background:#79d2ff;
   border-bottom:2px solid #2a334d;
 }
+.scene .cloud-layer{position:absolute;inset:0;overflow:hidden;z-index:1}
+.cloud{position:absolute;top:0;left:-20vw;width:calc(var(--px) * 16);height:calc(var(--px) * 7);}
+.cloud .p{position:absolute;background:#e6f6ff;border:2px solid #a9c8da}
+.cloud .p.a{left:calc(var(--px) * 1);top:calc(var(--px) * 3);width:calc(var(--px) * 6);height:calc(var(--px) * 3)}
+.cloud .p.b{left:calc(var(--px) * 5);top:calc(var(--px) * 1);width:calc(var(--px) * 7);height:calc(var(--px) * 4)}
+.cloud .p.c{left:calc(var(--px) * 9);top:calc(var(--px) * 3);width:calc(var(--px) * 5);height:calc(var(--px) * 3)}
+.cloud.slow{animation:cloud-drift 80s linear infinite}
+.cloud.med{animation:cloud-drift 60s linear infinite}
+.cloud.fast{animation:cloud-drift 45s linear infinite}
+@keyframes cloud-drift{to{transform:translateX(120vw)}}
 .scene .sun{
   position:absolute;top:calc(var(--px) * 2);right:calc(var(--px) * 2);
   width:calc(var(--px) * 8);height:calc(var(--px) * 8);
